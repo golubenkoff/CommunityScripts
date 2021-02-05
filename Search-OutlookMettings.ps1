@@ -40,7 +40,7 @@
 
 param(
 #region params
-[Parameter(Mandatory=$false)][string]$ImpersonateUserMail = "admin@contoso.com",         # Admin Account with Impersonate Rights
+[Parameter(Mandatory=$false)][string]$ImpersonateUserMail = "admin@contoso.com",   # Admin Account with Impersonate Rights
 [Parameter(Mandatory=$false)][string[]]$List = @("Vasya.Pupkin@contoso.com"),      # List of Primary Emails for Mailboxes
 
 [Parameter(Mandatory=$false)][datetime]$DateTimePicker_EndDate   = (Get-Date).Date,
@@ -60,7 +60,6 @@ $EWSDLL = (($(Get-ItemProperty -ErrorAction SilentlyContinue -Path Registry::$(G
         if (Test-Path $EWSDLL)
 		    {
 		    Import-Module $EWSDLL
-            #Add-Type -AssemblyName PresentationFramework
 		    }
 		else
 		    {
