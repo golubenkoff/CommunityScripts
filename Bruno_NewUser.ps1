@@ -66,12 +66,8 @@ param (
     $DefaultPassword = "Welcome1"
 )
 
- 
 
 $DC =  $env:LOGONSERVER -replace "\\\\"
-
-#$newUser = 'Paul Hewson'
-#$oldUser = 'agolubenkov' 
 
 $givenName = $newuser.split()[0] 
 $surname = $newuser.split()[1] 
