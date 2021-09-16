@@ -91,8 +91,10 @@ Write-Host `t "surName  : " -ForegroundColor DarkGray -NoNewline;  Write-Host $s
 $check = $null ; $check = try{ Get-ADUser $username -Server $DC -ErrorAction Stop}catch{}
 if(!$check){
 New-ADUser -path $($oldUserParams.DistinguishedName -replace "CN=.+?,") -AccountPassword (ConvertTo-SecureString -AsPlainText $DefaultPassword -Force) `
+-GivenName "$givenName" `
+-Surname "$surname" `
 -DisplayName "$givenName $surname" `
--Name $username `
+-Name "$givenName $surname" `
 -Enabled $true `
 -SamAccountName $username `
 -UserPrincipalName $($oldUserParams.UserPrincipalName -replace $oldUserParams.SamAccountName,$username) `
