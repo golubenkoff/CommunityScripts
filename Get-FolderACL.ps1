@@ -36,6 +36,7 @@
 		Author : Andrew V. Golubenkoff (andrew.golubenkoff@outlook.com)
 
 	.LINK
+        https://github.com/golubenkoff/CommunityScripts/blob/master/Get-FolderACL.ps1
 
 
 #>
