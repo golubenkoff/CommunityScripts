@@ -280,25 +280,24 @@ if ($GUI) {
             $filePath = Join-Path $scriptPath "Report_FolderACL_$(Get-Date -f 'ddMMyyyyHHmmss').csv"
         }
 
-        Write-Host "Exporting Report for folder [$($TextBox_folderName.Text))] to file: " -ForegroundColor DarkGray -NoNewline
-        Write-Host $filePath -ForegroundColor Cyan
+        if ($Report) {
+            Write-Host "Exporting Report for folder [$($TextBox_folderName.Text))] to file: " -ForegroundColor DarkGray -NoNewline
+            Write-Host $filePath -ForegroundColor Cyan
 
-        try {
-            $Report | Export-Csv -NoTypeInformation -Encoding UTF8 -Delimiter ';' -Path $filePath -ErrorAction stop
-        } catch {
-            Write-Host 'Cannot export: ' $_.Exception.Message
+            try {
+                $Report | Export-Csv -NoTypeInformation -Encoding UTF8 -Delimiter ';' -Path $filePath -ErrorAction stop
+            } catch {
+                Write-Host 'Cannot export: ' $_.Exception.Message
+            }
+            Read-MessageBoxDialog -Message "Exporting ACL Report for folder: [$($TextBox_folderName.Text))] to file: $filepath" -WindowTitle 'Export CSV' -Buttons OK
         }
-        Read-MessageBoxDialog -Message "Exporting ACL Report for folder: [$($TextBox_folderName.Text))] to file: $filepath" -WindowTitle 'Export CSV' -Buttons OK
-
     }
 
     function Form1Activated( $object ) {
 
     }
 
-    Main # This call must remain below all other event functions
-
-
+    Main
 
 
 } else {
@@ -317,23 +316,26 @@ if ($GUI) {
     } else {
         $Report += GetFolderACL $FolderName
     }
+
+
+    if ($Report) {
+
+        if ($ExportPath) {
+            $filePath = Join-Path $ExportPath "Report_FolderACL_$(Get-Date -f 'ddMMyyyyHHmmss').csv"
+        } else {
+            $filePath = Join-Path $scriptPath "Report_FolderACL_$(Get-Date -f 'ddMMyyyyHHmmss').csv"
+        }
+
+        Write-Host "Exporting Report for folder [$FolderName] to file: " -ForegroundColor DarkGray -NoNewline
+        Write-Host $filePath -ForegroundColor Cyan
+
+        try {
+            $Report | Export-Csv -NoTypeInformation -Encoding UTF8 -Delimiter ';' -Path $filePath -ErrorAction stop
+        } catch {
+            Write-Host 'Cannot export: ' $_.Exception.Message
+        }
+    }
+
 }
 
 
-if ($Report) {
-
-    if ($ExportPath) {
-        $filePath = Join-Path $ExportPath "Report_FolderACL_$(Get-Date -f 'ddMMyyyyHHmmss').csv"
-    } else {
-        $filePath = Join-Path $scriptPath "Report_FolderACL_$(Get-Date -f 'ddMMyyyyHHmmss').csv"
-    }
-
-    Write-Host "Exporting Report for folder [$FolderName] to file: " -ForegroundColor DarkGray -NoNewline
-    Write-Host $filePath -ForegroundColor Cyan
-
-    try {
-        $Report | Export-Csv -NoTypeInformation -Encoding UTF8 -Delimiter ';' -Path $filePath -ErrorAction stop
-    } catch {
-        Write-Host 'Cannot export: ' $_.Exception.Message
-    }
-}
