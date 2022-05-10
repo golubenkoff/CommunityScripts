@@ -1,3 +1,8 @@
+<#
+Requires on target server:
+IIS Management Scripts and Tools            Web-Scripting-Tools
+Install-WindowsFeature Web-Scripting-Tools  -ComputerName $ServerName
+#>
 [CmdletBinding()]
     param
     (
