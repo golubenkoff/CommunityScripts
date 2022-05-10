@@ -13,9 +13,7 @@
 invoke-command -ComputerName $ServerName -ArgumentList $ApplicationPool -ScriptBlock {
     param($PoolName)
     import-module WebAdministration
-    $pool = get-item “IIS:\Sites\$PoolName” | Select-Object applicationPool
+    $pool = get-item IIS:\AppPools\$PoolName
     $pool
-    Restart-WebAppPool $pool.applicationPool -Verbose
+    Restart-WebAppPool $pool.Name -Verbose
 }
-
-
