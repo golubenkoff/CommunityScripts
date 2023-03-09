@@ -87,7 +87,7 @@ class LogMessage {
     }
 
     ExportCsv ($LogFile) {
-        $this | Select-Object * -ExcludeProperty ProxyAddresses | Export-Csv -Path $LogFile -Append -NoTypeInformation -Encoding UTF8 -UseCulture
+        $this | Select-Object * | Export-Csv -Path $LogFile -Append -NoTypeInformation -Encoding UTF8 -UseCulture
     }
 
 }
@@ -123,6 +123,4 @@ Function ProcessItems {
 }
 #endregion Functions
 
-$sFolder = $StartFolder
-$ItemPath = $StartFolder.FolderPath
 ProcessItems -sFolder $StartFolder -ItemPath $StartFolder.FolderPath -ArchivePath $ArchivePath -SaveToMsg $SaveToMsg
