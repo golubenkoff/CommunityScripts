@@ -122,7 +122,7 @@ Write-Host 'MetaRoot Total Time: ' $($EndMetaRoot - $StartMetaRoot).totalSeconds
 
 $StartMetaRecurse = Get-Date
 (Get-ChildItem $FilePath -Recurse -Directory) | ForEach-Object {
-    Write-Progress -Activity 'Staring Jobs for subFolders' -CurrentOperation $_.Name
+    Write-Progress -Activity 'Starting Jobs for subFolders' -CurrentOperation $_.Name
     [void](WF_MetadataReportFile -FolderPath $_.FullName -AsJob)
 }
 Write-Host 'Please Wait for All Jobs to Complete' -back darkcyan -for white
