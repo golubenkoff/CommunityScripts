@@ -156,8 +156,8 @@ Write-Host 'MetaRecurse Total Time: ' $($EndMetaRecurse - $StartMetaRecurse).tot
 } | Export-Excel -Path $Dir -WorksheetName 'TIME STAT' -Title 'Time Statistics' -AutoSize -TableStyle Dark1 -Append
 
 
-$MetaRoot | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -AutoSize -TableStyle Light10
-$MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -AutoSize -TableStyle Light10 -Append
+$MetaRoot | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -TableStyle Light10
+$MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA'  -Append
 
 #endregion Export to Excel
 
