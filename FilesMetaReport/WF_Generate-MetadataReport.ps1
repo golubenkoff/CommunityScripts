@@ -156,8 +156,8 @@ Write-Host 'MetaRecurse Total Time: ' $($EndMetaRecurse - $StartMetaRecurse).tot
 } | Export-Excel -Path $Dir -WorksheetName 'TIME STAT' -Title 'Time Statistics' -AutoSize -TableStyle Dark1 -Append
 
 
-$MetaRoot | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -TableStyle Light10
-$MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA'  -Append
+$MetaRoot | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA'
+$MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -TableStyle Light10 -AutoSize  -Append
 
 #endregion Export to Excel
 
@@ -166,3 +166,4 @@ $MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type'
 1..3 | ForEach-Object { [console]::beep(600, 1000) ; Start-Sleep -Milliseconds 50 }
 
 Stop-Transcript
+
