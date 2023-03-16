@@ -20,7 +20,7 @@ workflow WF_MetadataReportFile {
 
     sequence {
 
-        $Files = Get-ChildItem -Path $FolderPath -File
+        $Files = Get-ChildItem -LiteralPath $FolderPath -File
 
         if ($Files.Count -lt $ThrottleLimit) { $ThrottleLimit = $Files.Count }
 
@@ -65,8 +65,7 @@ function Remove-InvalidFilePathCharacters {
     return $cleanFilePath
 }
 
-function Read-FolderBrowserDialog([string]$Message, [string]$InitialDirectory, [switch]$NoNewFolderButton)
-{
+function Read-FolderBrowserDialog([string]$Message, [string]$InitialDirectory, [switch]$NoNewFolderButton) {
     $browseForFolderOptions = 0
     if ($NoNewFolderButton) { $browseForFolderOptions += 512 }
 
@@ -84,7 +83,7 @@ function Read-FolderBrowserDialog([string]$Message, [string]$InitialDirectory, [
 #region  Defines the directory where the files will be, to get their metadata
 Write-Host "[$(Get-Date -f 'dddd dd MMMM yyyy hh:mm:ss tt')] Select RootFolder: " -BackgroundColor cyan -ForegroundColor white
 
-$FilePath = Read-FolderBrowserDialog -Message 'Select Root Folder' -InitialDirectory  $(if ($RootFolder) { $RootFolder }else { 'MyComputer' })
+$FilePath = Read-FolderBrowserDialog -Message 'Select Root Folder' -InitialDirectory $(if ($RootFolder) { $RootFolder }else { 'MyComputer' })
 
 if ([string]::IsNullOrEmpty($FilePath)) {
     Write-Host 'No Root Folder Selected... Aborting' -BackgroundColor Red -ForegroundColor White
@@ -99,7 +98,7 @@ $VolumeName = Get-CimInstance CIM_LogicalDisk | Where-Object { $_.Name -eq $FPSu
 
 # Lets create File Name
 $Dir = (Remove-InvalidFilePathCharacters $FilePath) -replace ':','-' -replace '\\','-'
-$Dir = Join-Path $LogFolder "LIST-${VolumeName}-${Dir}-$(get-date -f 'ddMMyyyyHHmm').xlsx"
+$Dir = Join-Path $LogFolder "LIST-${VolumeName}-${Dir}-$(Get-Date -f 'ddMMyyyyHHmm').xlsx"
 Write-Host "Filename = $Dir" -ForegroundColor Yellow
 #endregion  Defines the directory where the files will be, to get their metadata
 
@@ -149,15 +148,15 @@ Write-Host 'MetaRecurse Total Time: ' $($EndMetaRecurse - $StartMetaRecurse).tot
 } | Export-Excel -Path $Dir -WorksheetName 'MEDIA STAT' -Title 'Media Statistics' -AutoSize -TableStyle Dark1
 
 [PSCustomObject]@{
-    StartTime   = $(Get-Date $StartMetaRoot -f 'dddd dd MMMM yyyy hh:mm:ss tt')
-    EndTime      = $(Get-Date $EndMetaRecurse -f 'dddd dd MMMM yyyy hh:mm:ss tt')
-    RootFolder      = $FilePath
-    TotalTime  = $($EndMetaRecurse-$StartMetaRoot)
-} | Export-Excel -Path $Dir -WorksheetName 'TIME STAT' -Title 'Time Statistics' -AutoSize -TableStyle Dark1 -Append
+    StartTime  = $(Get-Date $StartMetaRoot -f 'dddd dd MMMM yyyy hh:mm:ss tt')
+    EndTime    = $(Get-Date $EndMetaRecurse -f 'dddd dd MMMM yyyy hh:mm:ss tt')
+    RootFolder = $FilePath
+    TotalTime  = $($EndMetaRecurse - $StartMetaRoot)
+} | Export-Excel -Path $Dir -WorksheetName 'TIME STAT' -Title 'Time Statistics' -AutoSize -TableStyle Dark1
 
 
 $MetaRoot | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA'
-$MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -TableStyle Light10 -AutoSize  -Append
+$MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -TableStyle Light10 -AutoSize -Append
 
 #endregion Export to Excel
 
