@@ -21,6 +21,8 @@ if (!([string]::IsNullOrEmpty($OU))) {
                     })
             }
         }
+    }else{
+        Write-Host "OU Not Found: $OU" -BackgroundColor Red -ForegroundColor White
     }
 }
 
