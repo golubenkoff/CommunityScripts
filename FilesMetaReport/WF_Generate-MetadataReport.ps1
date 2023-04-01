@@ -46,6 +46,7 @@ workflow WF_MetadataReportFile {
                     Album       = $folder.GetDetailsOf($fileObject, 14)
                     AlbumArtist = $folder.GetDetailsOf($fileObject, 13)
                     Size        = $file.Length
+                    SizeMB      = $('{0:n2}' -f ($file.Length / 1MB))
                 }
             }
         }
@@ -109,11 +110,7 @@ Write-Host "[$(Get-Date -f 'dddd dd MMMM yyyy hh:mm:ss tt')] Processing Metadata
 $StartMetaRoot = Get-Date
 $MetaRoot = WF_MetadataReportFile -FolderPath $FilePath
 $MetaRoot.count
-if (($MetaRoot | Measure-Object).count -gt 0) {
-    $MetaRoot.psobject.Properties.Remove('PSComputerName')
-    $MetaRoot.psobject.Properties.Remove('PSShowComputerName')
-    $MetaRoot.psobject.Properties.Remove('PSSourceJobInstanceId')
-}
+
 Get-Job | Remove-Job
 $EndMetaRoot = Get-Date
 Write-Host 'MetaRoot Total Time: ' $($EndMetaRoot - $StartMetaRoot).totalSeconds
@@ -127,11 +124,7 @@ $StartMetaRecurse = Get-Date
 Write-Host 'Please Wait for All Jobs to Complete' -back darkcyan -for white
 $MetaRecurse = Get-Job | Wait-Job | Receive-Job
 $MetaRecurse.Count
-if (($MetaRecurse | Measure-Object).count -gt 0) {
-    $MetaRecurse.psobject.Properties.Remove('PSComputerName')
-    $MetaRecurse.psobject.Properties.Remove('PSShowComputerName')
-    $MetaRecurse.psobject.Properties.Remove('PSSourceJobInstanceId')
-}
+
 Get-Job | Remove-Job
 $EndMetaRecurse = Get-Date
 Write-Host 'MetaRecurse Total Time: ' $($EndMetaRecurse - $StartMetaRecurse).totalSeconds
@@ -155,8 +148,8 @@ Write-Host 'MetaRecurse Total Time: ' $($EndMetaRecurse - $StartMetaRecurse).tot
 } | Export-Excel -Path $Dir -WorksheetName 'TIME STAT' -Title 'Time Statistics' -AutoSize -TableStyle Dark1
 
 
-$MetaRoot | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA'
-$MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -TableStyle Light10 -AutoSize -Append
+$MetaRoot | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* -ExcludeProperty 'PSComputerName','PSSourceJobInstanceId','PSShowComputerName' | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA'
+$MetaRecurse | Where-Object { $_.'Item type' -ne 'ITC2 File' -and $_.'Item type' -ne 'iTunes Database File' } | Select-Object @{N = 'VolumeName';E = { $VolumeName } },* -ExcludeProperty 'PSComputerName','PSSourceJobInstanceId','PSShowComputerName' | Sort-Object Folder,Name | Export-Excel -Path $Dir -WorksheetName 'MEDIA METADATA' -TableStyle Light10 -AutoSize -Append
 
 #endregion Export to Excel
 
