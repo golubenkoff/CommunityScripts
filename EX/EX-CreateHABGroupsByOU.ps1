@@ -51,8 +51,9 @@ Create Exchange HAB Groups by OU Structure
 
 #>
 param(
-$HabRootName = 'HAB_ROOT',
-$HabGroupsOuName = 'HAB_GROUPS'
+    $HabRootName = 'HAB_ROOT',
+    $HabGroupsOuName = 'HAB_GROUPS',
+    [switch]$StartProcessing
 )
 
 
@@ -140,7 +141,7 @@ Function GetHabName {
 
     return [PSCustomObject]@{
         DisplayName = $(Trim-Length -Str $( $('# ' + $($OU.Description)) ) -Length 250) -replace '^\s' -replace '\s$'
-        Name        = $("HAB_$($OU.uSnCreated)_" + $(TranslitRU2LAT -inString $(Trim-Length -Str (($($OU.Name)) -replace ",",'_' -replace "'" -replace '\(' -replace '\)' -replace '"' -replace '”' -replace '„' ) -Length 44 -ErrorAction Stop) ) ) -replace '\s',"_" -replace '\.$'
+        Name        = $("HAB_$($OU.uSnCreated)_" + $(TranslitRU2LAT -inString $(Trim-Length -Str (($($OU.Name)) -replace ",",'_' -replace "'" -replace '\(' -replace '\)' -replace '"' -replace '”' -replace '„' ) -Length 44 -ErrorAction Stop) ) ) -replace '\s','_' -replace '\.$'
     }
 
 }
@@ -154,49 +155,61 @@ Function CreateHabGroup {
     $nameObj = $null ; $NameObj = GetHabName $OU
     Write-Host $GroupObj.Name `t "[$($nameObj.Name)] - [$($nameObj.displayName)]" `t $GroupObj.uSnCreated `t $ParentName
 
+    $membersHAB = $null ; $membersHAB = try {
+        Get-ADUser -SearchBase $GroupObj.DistinguishedName -SearchScope OneLevel -Server $DC -LDAPFilter '(&(objectClass=user)(!(useraccountcontrol:1.2.840.113556.1.4.803:=2))(Mail=*@*))' -ErrorAction Stop
+    } catch {
+        Write-Host 'Cannot Get Members:' $GroupObj.DistinguishedName $_.exception.messages
+    }
+
 
     try {
         $CheckGroupID = Get-DistributionGroup $nameObj.Name -DomainController $DC -ErrorAction stop -Verbose
     } catch {
         try {
-            Write-Host `t`t 'Creating Group: ' -ForegroundColor Gray -NoNewline ; Write-Host $Name -ForegroundColor Green
-            $CheckGroupID = New-DistributionGroup -name $nameObj.Name -DisplayName $nameObj.DisplayName -Alias $nameObj.Name -OrganizationalUnit $groupsDN.DistinguishedName -DomainController $DC -ErrorAction Stop
-            Set-Group $nameObj.Name -IsHierarchicalGroup:$true -DomainController $DC -WarningAction SilentlyContinue -ErrorAction Stop -BypassSecurityGroupManagerCheck
-            Set-DistributionGroup $nameObj.Name -MaxSendSize 10MB -MaxReceiveSize 10MB -MailTip 'Внимание! Максимальный Размер сообщения 10Мб' -DomainController $DC
+            if ($null -ne $membersHAB -and $StartProcessing.IsPresent ) {
+                Write-Host `t`t 'Creating Group: ' -ForegroundColor Gray -NoNewline ; Write-Host $nameObj.Name -ForegroundColor Green
+                $CheckGroupID = New-DistributionGroup -name $nameObj.Name -DisplayName $nameObj.DisplayName -Alias $nameObj.Name -OrganizationalUnit $groupsDN.DistinguishedName -DomainController $DC -ErrorAction Stop
+                Set-Group $nameObj.Name -IsHierarchicalGroup:$true -DomainController $DC -WarningAction SilentlyContinue -ErrorAction Stop -BypassSecurityGroupManagerCheck
+                Set-DistributionGroup $nameObj.Name -MaxSendSize 10MB -MaxReceiveSize 10MB -MailTip 'Внимание! Максимальный Размер сообщения 10Мб' -DomainController $DC
+            }elseif($null -ne $membersHAB -and !($StartProcessing.IsPresent)){
+                Write-Host `t`t '[Check Only ]Creating Group: ' -ForegroundColor Gray -NoNewline ; Write-Host $nameObj.Name -ForegroundColor Green
+            }else{
+                Write-Host `t`t '[Skipping ] Creating Group - No Members: ' -ForegroundColor Gray -NoNewline ; Write-Host $nameObj.Name -ForegroundColor Green
+            }
         } catch { Write-Host "Cannot Create Group: $($nameObj.Name) $($_.Exception.ItemName) $($_.Exception.Message)" }
     } finally {
 
-        # ADD to Parent
-        if ($GroupObj.DistinguishedName -ne $rootDN.DistinguishedName) {
+        if ($null -ne $CheckGroupID) {
+            # ADD to Parent
+            if ($GroupObj.DistinguishedName -ne $rootDN.DistinguishedName) {
 
-            if (!( (Get-DistributionGroupMember $ParentGroup.Name -DomainController $DC).Name -ccontains $CheckGroupID.Name)) {
-                Add-DistributionGroupMember $ParentGroup.Name -Member $CheckGroupID.DistinguishedName
+                if (!( (Get-DistributionGroupMember $ParentGroup.Name -DomainController $DC).Name -ccontains $CheckGroupID.Name) -and $StartProcessing.IsPresent) {
+                    Add-DistributionGroupMember $ParentGroup.Name -Member $CheckGroupID.DistinguishedName
+                }
             }
-        }
 
-        # Add Users to Group
+            # Add Users to Group
 
-        $CurrentGroupID = $null ; $CurrentGroupID = try {
-            Get-ADGroup $CheckGroupID.DistinguishedName -Properties member -ErrorAction Stop
-        } catch {
-            Write-Host 'Cannot Find Group:' $CheckGroupID.DistinguishedName $_.exception.messages
-        }
-
-        $membersHAB = $null ; $membersHAB = try {
-            Get-ADUser -SearchBase $GroupObj.DistinguishedName -SearchScope OneLevel -Server $DC -LDAPFilter '(&(objectClass=user)(!(useraccountcontrol:1.2.840.113556.1.4.803:=2))(Mail=*@*))' -ErrorAction Stop | Where-Object DistinguishedName -NotIn $CurrentGroupID.member
-        } catch {
-            Write-Host 'Cannot Get Members:' $GroupObj.DistinguishedName $_.exception.messages
-        }
-
-
-        if ($membersHAB -and $CurrentGroupID) {
-            try {
-                Add-ADGroupMember $CurrentGroupID -Members $membersHAB -ErrorAction Stop
+            $CurrentGroupID = $null ; $CurrentGroupID = try {
+                Get-ADGroup $CheckGroupID.DistinguishedName -Properties member -ErrorAction Stop
             } catch {
-                Write-Host "Cannot Add HAB Members [$($CurrentGroupID.Name)]: "$_.exception.Message
+                Write-Host 'Cannot Find Group:' $CheckGroupID.DistinguishedName $_.exception.messages
+            }
+
+            if ($null -ne $membersHAB) {
+                $membersHABToAdd = $null ;  $membersHABToAdd = $membersHAB | Where-Object DistinguishedName -NotIn $CurrentGroupID.member
+
+                if ($membersHABToAdd -and $CurrentGroupID -and $StartProcessing.IsPresent) {
+                    try {
+                        Add-ADGroupMember $CurrentGroupID -Members $membersHABToAdd -ErrorAction Stop
+                    } catch {
+                        Write-Host "Cannot Add HAB Members [$($CurrentGroupID.Name)]: "$_.exception.Message
+                    }
+                }elseif($membersHABToAdd -and $CurrentGroupID -and !($StartProcessing.IsPresent)){
+                    Write-Host `t`t '[Check Only ]Adding Members to Group: ' -ForegroundColor Gray -NoNewline ; Write-Host $nameObj.Name -ForegroundColor Green
+                }
             }
         }
-
     }
 }
 
@@ -230,8 +243,8 @@ if ($null -ne $rootDN -and $null -ne $groupsDN) {
 
 
     }
-}else{
-    throw "No root OU for Users or Groups. Please check Names"
+} else {
+    throw 'No root OU for Users or Groups. Please check Names'
 }
 
 # DONE
